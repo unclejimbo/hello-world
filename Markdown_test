@@ -1,0 +1,35 @@
+This is a plane sentence.
+#header 1
+##header 2
+###header 3
+Quote:
+> A quote
+__Bold__
+**Bold too**
+_**Italic and bold**_
+* L1
+* L2
+_ L3
+1. L4
+  1. L4.1
+  2. L4.2
+2. L5
+`**Inline formatting**`
+'''c++
+/* c++ code */
+#include <stdio.h>
+int main()
+{
+  //this is a comment
+}
+```
+[Links](www.github.com/unclejimbo)
+
+#Diff in github
+muti_under_socres_here
+http://www.github.com
+~~Strikethrough~~
+|First|Second|
+|:-----|------:|
+|col1|col2|
+|col11|col22|
