@@ -7,8 +7,8 @@ void TG::Encode(TMesh m) {
   std::Stack<ActiveList> S;
   ActiveList AL, AL1;
 
-  while(!M.isTraversed()) {
-    Triangle tri = M.unvisitedTriangle();
+  while(!M.IsTraversed()) {
+    Triangle tri = M.UnvisitedTriangle();
     AL.Add(tri.v1, tri.v2, tri.v3);
     AL.focus = tri.v1;
     S.push(AL);

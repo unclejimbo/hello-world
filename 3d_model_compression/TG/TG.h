@@ -5,6 +5,8 @@
 
 class TG {
 public:
+  TG() {}
+  ~TG() {}
   void Encode(TMesh);
   void Decode(TMesh*);
 private:
