@@ -16,7 +16,7 @@ void TG::Encode(TMesh m) {
     while (!S.empty()) {
       ActiveList AL = S.pop();
       while (!AL.empty()) {
-        Edge edge = AL.focus.FreeEdge();
+        Vertex edge[2] = AL.focus.FreeEdge();
         Vertex neighbor = AL.focus.Neighbor(edge);
         if (neghbor.IsFree()) {
           AL.Add(neighbor);

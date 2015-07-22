@@ -1,9 +1,10 @@
 #pragma once
-#include "Triangle.h"
-#include "Vertex.h"
-#include "Edge.h"
 #include <string>
 #include <vector>
+
+// Data type definition
+typedef double vec[3];
+typedef double tri[3];
 
 class TMesh {
 public:
@@ -13,6 +14,7 @@ public:
   Triangle UnvisitedTriangle(); // Return an unvisited triangle
   void ReadObj(std::string file_name);
 private:
-  std::vector<Vertex> vertices;
-  std::vector<Triangle> triangles;
+  std::vector<vec> vertices;
+  std::vector<tri> triangles;
+  void BuildTopo();
 }
