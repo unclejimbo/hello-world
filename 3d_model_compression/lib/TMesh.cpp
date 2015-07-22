@@ -41,6 +41,7 @@ void TMesh::ReadObj(std::string file_name) {
 }
 
 void TMesh::BuildTopo() {
+  
 }
 
 bool TMesh::IsTraversed() {
