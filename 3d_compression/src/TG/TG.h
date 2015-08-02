@@ -1,5 +1,5 @@
 #pragma once
-#include "../../lib/TMesh.h"
+#include "../../src/TMesh/TMesh.h"
 #include "ActiveList.h"
 #include <Stack>
 #include <iterator>

@@ -1,5 +1,5 @@
 #include "../src/TG/TG.h"
-#include "../lib/TMesh.h"
+#include "../src/TMesh/TMesh.h"
 #include <string>
 #define GLEW_STATIC
 #include <GL/glew.h>
