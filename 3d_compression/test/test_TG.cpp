@@ -8,9 +8,9 @@
 GLuint screenW = 800, screenH = 600;
 
 int main() {
-	TG tg;
 	TMesh mesh;
 	mesh.ReadObj("../../models/untitled.obj");
-	tg.Encode(mesh);
+	TG tg(mesh);
+	tg.Encode();
 	system("PAUSE");
 }

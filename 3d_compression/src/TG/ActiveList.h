@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <initializer_list>
 #include <algorithm>
 #include <iterator>
 
@@ -8,7 +7,7 @@ class ActiveList {
 public:
 	std::vector<int> active_indices;
 	int focus;
-	void Add(std::initializer_list<int> indices);
+	void Add(int index);
 	int Split(ActiveList *AL, int new_focus);
 	void Merge(ActiveList *AL, int new_focus);
 	//void RemoveFullVertices();
@@ -17,10 +16,8 @@ public:
 };
 
 // Add indices to the activelist using an initializing list
-void ActiveList::Add(std::initializer_list<int> indices) {
-	for (auto it = indices.begin(); it != indices.end(); ++it) {
-		active_indices.push_back(*it);
-	}
+void ActiveList::Add(int index) {
+	active_indices.push_back(index);
 }
 
 // Split the activelist into two with respect to
