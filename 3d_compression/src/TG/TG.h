@@ -29,6 +29,7 @@ private:
   ActiveList *FindOnStack(std::stack<ActiveList*> stack, int index);
 	int FindUnvisitedTriangle();
 	void Add(ActiveList* AL, int index);
+	void Split(ActiveList* AL, ActiveList* AL1, int index, std::stack<ActiveList*> S);
 };
 
 // Add cmd
@@ -41,6 +42,20 @@ void TG::Add(ActiveList* AL, int index) {
 	visitedVertices[index] = 1;
 	--visitedTimes[AL->focus];
 	--visitedTimes[index];
+}
+
+// Split cmd
+void TG::Split(ActiveList* AL, ActiveList* AL1, int index, std::stack<ActiveList*> S) {
+	int offset = AL->Split(AL1, index);
+	std::string str_offset = std::to_string(offset);
+	code += "split" + str_offset;
+	// Push the smaller one on stack
+	if (AL->active_indices.size() < AL1->active_indices.size()) {
+		ActiveList* temp = AL;
+		AL = AL1;
+		AL1 = AL;
+	}
+	S.push(AL1);
 }
 
 // Return the pointer to the AL contains the split index on stack
@@ -96,7 +111,7 @@ void TG::Encode() {
 		tri triangle = mesh->triangles[i];
 		Add(&AL, triangle.index1);
 		Add(&AL, triangle.index2);
-		Add(&AL, triangle.index2);
+		Add(&AL, triangle.index3);
 		AL.focus = triangle.index1;
 		imcomplete_lists.push(&AL);
 
@@ -113,10 +128,7 @@ void TG::Encode() {
 					Add(&AL, neighbor->index);
 				}	else {
 					if (AL.Contains(neighbor->index)) { // In current AL
-						int offset = AL.Split(&AL1, neighbor->index);
-						std::string offset_str = std::to_string(offset);
-						imcomplete_lists.push(&AL1);
-						code += " split " + offset_str;
+						Split(&AL, &AL1, neighbor->index, imcomplete_lists);
 					} else { // In some AL on stack
 						ActiveList *al = FindOnStack(imcomplete_lists, neighbor->index);
 						AL.Merge(al, neighbor->index);
