@@ -9,10 +9,14 @@ typedef OpenMesh::TriMesh_ArrayKernelT<> MyMesh;
 class TMesh {
 public:
   TMesh() {}
+	TMesh(std::string file_name) {
+		ReadMesh(file_name);
+	}
   ~TMesh() {}
   void ReadMesh(std::string file_name);
 	int N_Vertices();
 	int N_Triangles();
+	int Valance(int index);
 	bool IsOpen();
 private:
 	MyMesh mesh;
@@ -74,9 +78,23 @@ int TMesh::N_Triangles() {
 }
 
 
+// Return valance
+int TMesh::Valance(int index) {
+	OpenMesh::VPropHandleT<MyMesh::Scalar> valance;
+	OpenMesh::VertexHandle v_it(index);
+	return mesh.property(valance, index);
+}
+
+
 // Return true when mesh is open,
 // namely, having boundaries
 bool TMesh::IsOpen() {
-	// TODO
-	return true;
+	bool open = false;
+	for (MyMesh::VertexIter v_it = mesh.vertices_begin(); v_it != mesh.vertices_end(); ++v_it) {
+		if (mesh.is_boundary(*v_it)) {
+			open = true;
+			break;
+		}
+	}
+	return open;
 }
