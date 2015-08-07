@@ -34,7 +34,7 @@ private:
 	OpenMesh::FPropHandleT<bool> fVisited;
 
 	// Helper functions
-	void Add(AList* AL, int index);
+	void Add(AList* AL, OpenMesh::VertexHandle v_handle);
 	void Split(AList* AL, AList* AL1, int index, std::stack<AList*> S);
 	bool IsTraversed(OpenMesh::FaceHandle& f_handle);
 	bool FreeVertex(OpenMesh::VertexHandle v_handle);
@@ -113,13 +113,10 @@ void TG::EncodeConnectivity() {
 		// and push in AL the 3 vertices's indices
 		TMesh::ConstFaceVertexIter cfv_it = mesh.cfv_begin(f_handle),
 			cfv_beg = cfv_it;
-		int index1 = (*cfv_it++).idx();
-		int index2 = (*cfv_it++).idx();
-		int index3 = (*cfv_it).idx();
-		Add(&AL, index1);
-		Add(&AL, index2);
-		Add(&AL, index3);
-		AL.focus = index1;
+		Add(&AL, *cfv_it++);
+		Add(&AL, *cfv_it++);
+		Add(&AL, *cfv_it);
+		AL.focus = cfv_beg->idx();
 		imcomplete_lists.push(&AL);
 
 		while (!imcomplete_lists.empty()) {
@@ -135,7 +132,7 @@ void TG::EncodeConnectivity() {
 				// If the neighboring vertex hasn't been visited,
 				// simply add it to the AL
 				if (FreeVertex(*vv_ccwit))
-					Add(&AL, vv_ccwit->idx());
+					Add(&AL, *vv_ccwit);
 				// Else the neighboring vertex should either be in the
 				// current AL or in another AL on stack
 				else {
@@ -226,14 +223,15 @@ ss >> index1 >> index2;
 
 // Add index to AL, generate code word,
 // and update vertex properties
-void TG::Add(AList* AL, int index) {
+void TG::Add(AList* AL, OpenMesh::VertexHandle v_handle) {
+	int index = v_handle.idx();
 	AL->Add(index);
 
-	std::string str_index = std::to_string(index);
-	code += "add" + str_index;
+	int valance = mesh.property(valances, v_handle);
+	std::string str_valance = std::to_string(valance);
+	code += "add" + str_valance;
 
 	// Mark this vertex as visited
-	TMesh::VertexHandle v_handle(index);
 	mesh.property(vVisited, v_handle) = true;
 
 	// Mark this triangle as visited
