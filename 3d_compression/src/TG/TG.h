@@ -36,10 +36,11 @@ private:
 	// Helper functions
 	void Add(AList* AL, OpenMesh::VertexHandle v_handle);
 	void Split(AList* AL, AList* AL1, int index, std::stack<AList*> S);
+	void Merge(AList* AL, AList* AL1, int index);
 	bool IsTraversed(OpenMesh::FaceHandle& f_handle);
 	bool FreeVertex(OpenMesh::VertexHandle v_handle);
 	bool FullVertex(OpenMesh::VertexHandle v_handle);
-	//AList *FindOnStack(std::stack<AList*> stack, int index);
+	AList *FindOnStack(std::stack<AList*> stack, int index);
 };
 
 
@@ -97,6 +98,11 @@ void TG::ReadMesh(std::string file_name) {
 	for (TMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
 		mesh.property(fVisited, *f_it) = false;
 	}
+
+	// Print basic info
+	std::cout << file_name << ": " << std::endl
+		<< "#vertices:  " << mesh.n_vertices() << std::endl
+		<< "#triangles: " << mesh.n_faces() << std::endl;
 }
 
 
@@ -109,14 +115,16 @@ void TG::EncodeConnectivity() {
 	TMesh::FaceHandle f_handle; 
 
 	while (!IsTraversed(f_handle)) {
-		// Iterate through the given triangle
-		// and push in AL the 3 vertices's indices
-		TMesh::ConstFaceVertexIter cfv_it = mesh.cfv_begin(f_handle),
-			cfv_beg = cfv_it;
-		Add(&AL, *cfv_it++);
-		Add(&AL, *cfv_it++);
-		Add(&AL, *cfv_it);
-		AL.focus = cfv_beg->idx();
+		// Iterate through the initial triangle and Add to AL
+		TMesh::ConstFaceVertexIter cfv_it = mesh.cfv_begin(f_handle);
+		TMesh::VertexHandle v0_handle = cfv_it++.handle();
+		TMesh::VertexHandle v1_handle = cfv_it++.handle();
+		TMesh::VertexHandle v2_handle = cfv_it.handle();
+		
+		Add(&AL, v0_handle);
+		Add(&AL, v1_handle);
+		Add(&AL, v2_handle);
+		AL.focus = v0_handle.idx();
 		imcomplete_lists.push(&AL);
 
 		while (!imcomplete_lists.empty()) {
@@ -125,12 +133,34 @@ void TG::EncodeConnectivity() {
 
 			// Given a focus vertex, iterate through
 			// all its neighbor vertices in ccw order
-			TMesh::VertexHandle v_handle(AL.focus);
-			TMesh::VertexVertexCCWIter vv_ccwit = mesh.vv_ccwiter(v_handle);
+			// Note that if the initial triangle is 
+			//                 v0
+			//                /  \
+			//               v1--v2
+			// and we set v0 as focus, then the iteration
+			// should start from v2 to v1
+			TMesh::VertexVertexCCWIter vv_ccwit = mesh.vv_ccwiter(v0_handle);
+			TMesh::VertexVertexCCWIter vv_end = vv_ccwit;
+
+			while (vv_end->idx() != v1_handle.idx() || vv_end->idx() != v2_handle.idx()) {
+				++vv_end;
+			}
+			vv_ccwit = vv_end; // v1
+			++vv_ccwit; // v2
+
 
 			while (!AL.Empty()) {
+				++vv_ccwit;
+				if (!vv_ccwit->is_valid())
+					vv_ccwit = mesh.vv_ccwiter(v0_handle);
+				if (vv_ccwit == vv_end) {
+					std::cout << "ERROR::VVIter: This is not supposed to happen!" << std::endl;
+					exit(1);
+				}
+
 				// If the neighboring vertex hasn't been visited,
 				// simply add it to the AL
+				int index_debug = vv_ccwit->idx();
 				if (FreeVertex(*vv_ccwit))
 					Add(&AL, *vv_ccwit);
 				// Else the neighboring vertex should either be in the
@@ -139,10 +169,8 @@ void TG::EncodeConnectivity() {
 					if (AL.Contains(vv_ccwit->idx()))
 						Split(&AL, &AL1, vv_ccwit->idx(), imcomplete_lists);
 					else {
-						//AList *al = FindOnStack(imcomplete_lists, vv_ccwit->idx());
-						// ------------
-						// TODO : Merge
-						// ------------
+						AList *al = FindOnStack(imcomplete_lists, vv_ccwit->idx());
+						Merge(&AL, al, vv_ccwit->idx());
 					}
 				}
 
@@ -163,13 +191,10 @@ void TG::EncodeConnectivity() {
 					if (AL.Empty())
 						break;
 					AL.focus = *AL.begin();
-					v_handle = mesh.vertex_handle(AL.focus);
-					vv_ccwit = mesh.vv_ccwiter(v_handle);
+					v0_handle = mesh.vertex_handle(AL.focus);
+					vv_ccwit = mesh.vv_ccwiter(v0_handle);
 					continue;
 				}
-
-				// Else, proceed with the next vertex of this focus
-				++vv_ccwit;
 			}
 		}
 	}
@@ -272,6 +297,14 @@ void TG::Split(AList* AL, AList* AL1, int index, std::stack<AList*> S) {
 }
 
 
+// Merge two AL into one
+void TG::Merge(AList* AL, AList* AL1, int index) {
+	// --------------------
+	// TODO : DO YOUR MERGE
+	// --------------------
+}
+
+
 // Return true if every triangle in the mesh is visited,
 // and store the FaceHandle if found an unvisited one
 bool TG::IsTraversed(OpenMesh::FaceHandle& f_handle) {
@@ -303,20 +336,31 @@ bool TG::FullVertex(OpenMesh::VertexHandle v_handle) {
 
 
 // Return the pointer to the AL contains the split index on stack
-/*AList* TG::FindOnStack(std::stack<AList*> stack, int index)
-{
+AList* TG::FindOnStack(std::stack<AList*> stack, int index) {
 	std::stack<AList*> container;
+	AList* result = nullptr;
+
+	// Find on stack
 	while (!stack.empty()) {
 		AList *p = stack.top();
 		if (p->Contains(index)) {
 			stack.pop();
-			return p;
+			result = p;
+			break;
 		}
 		container.push(p);
 		stack.pop();
 	}
+
+	// Restore stack
 	while (!container.empty()) {
 		stack.push(container.top());
 		container.pop();
 	}
-}*/
+
+	if (result == nullptr) {
+		std::cerr << "Error: bad algorithm" << std::endl;
+		exit(1);
+	}
+	return result;
+}
