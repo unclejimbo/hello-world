@@ -40,6 +40,8 @@ inline void ActiveList::Add(int index) {
 // Split the activelist into two with respect to
 // the new_focus, and return the offset between
 // the focus and the new_focus along AL in ccw order
+// Note that focus and intersection should both appear
+// in AL and AL1 to ensure AL1 has at least 3 vertices
 inline int ActiveList::Split(ActiveList *AL1, int intersection) {
 	auto start = std::find(active_indices.begin(), active_indices.end(), focus);
 	auto stop = std::find(active_indices.begin(), active_indices.end(), intersection);
@@ -53,13 +55,15 @@ inline int ActiveList::Split(ActiveList *AL1, int intersection) {
 			if (it == stop)
 				break;
 		}
-
 		++offset;
 		AL1->active_indices.push_back(*it++);
 	}
+	++offset;
+	AL1->active_indices.push_back(*stop);
 
 	// Delete those items from AL
-	if (start < stop)
+	++start; --stop;
+	if (start <= stop)
 		active_indices.erase(start, stop);
 	// Handling off end condition
 	else {
