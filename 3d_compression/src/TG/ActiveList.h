@@ -19,6 +19,7 @@ public:
 	bool Contains(int index);
 	int Size();
 	int NextNeighbor(int index);
+	int PreviousNeighbor(int index);
 	std::vector<int>::iterator Remove(int index);
 	std::vector<int>::iterator Remove(std::vector<int>::iterator iter);
 	bool FocusRemoved();
@@ -43,8 +44,8 @@ inline void ActiveList::Add(int index) {
 // Note that focus and intersection should both appear
 // in AL and AL1 to ensure AL1 has at least 3 vertices
 inline int ActiveList::Split(ActiveList *AL1, int intersection) {
-	auto start = std::find(active_indices.begin(), active_indices.end(), focus);
-	auto stop = std::find(active_indices.begin(), active_indices.end(), intersection);
+	auto start = std::find(active_indices.begin(), active_indices.end(), intersection);
+	auto stop = std::find(active_indices.begin(), active_indices.end(), focus);
 	int offset = 0;
 
 	// Copy inner items from AL to AL1
@@ -58,17 +59,21 @@ inline int ActiveList::Split(ActiveList *AL1, int intersection) {
 		++offset;
 		AL1->active_indices.push_back(*it++);
 	}
-	++offset;
 	AL1->active_indices.push_back(*stop);
 
 	// Delete those items from AL
-	++start; --stop;
-	if (start <= stop)
-		active_indices.erase(start, stop);
+	if (start <= stop) {
+		active_indices.erase(++start, stop);
+	}
 	// Handling off end condition
 	else {
-		active_indices.erase(start, active_indices.end());
-		active_indices.erase(active_indices.begin(), stop);
+		if (++start == active_indices.end()) {
+			start = active_indices.begin();
+			active_indices.erase(start, stop);
+		} else {
+			active_indices.erase(start, active_indices.end());
+			active_indices.erase(active_indices.begin(), stop);
+		}
 	}
 
 	// Inherit focus
@@ -115,7 +120,23 @@ inline int ActiveList::NextNeighbor(int index) {
 	}
 	if (iter == active_indices.end())
 		return NULL;
-	return *(++iter);
+	if (++iter == active_indices.end())
+		iter = active_indices.begin();
+	return *(iter);
+}
+
+
+// Return the index to the previous neighbor
+inline int ActiveList::PreviousNeighbor(int index) {
+	auto r_iter = active_indices.rbegin();
+	while (r_iter != active_indices.rend() && *r_iter != index) {
+		++r_iter;
+	}
+	if (r_iter == active_indices.rend())
+		return NULL;
+	if (++r_iter == active_indices.rend())
+		r_iter = active_indices.rbegin();
+	return *(r_iter);
 }
 
 

@@ -26,11 +26,12 @@ private:
 	// Data members
 	std::string code;
 	TMesh mesh;
+	std::vector<int> indices;
 
 	// Mesh handles
 	OpenMesh::VPropHandleT<int> valances;
-	OpenMesh::VPropHandleT<int> vCounter;
 	OpenMesh::VPropHandleT<bool> vVisited;
+	OpenMesh::EPropHandleT<bool> eVisited;
 	OpenMesh::FPropHandleT<bool> fVisited;
 
 	// Helper functions
@@ -38,8 +39,9 @@ private:
 	void Split(AList* AL, AList* AL1, int index, std::stack<AList*> S);
 	void Merge(AList* AL, AList* AL1, int index);
 	bool IsTraversed(OpenMesh::FaceHandle& f_handle);
+	OpenMesh::HalfedgeHandle FindFreeEdge(OpenMesh::VertexHandle focus_handle, AList& AL, std::stack<AList*> stack);
 	bool FreeVertex(OpenMesh::VertexHandle v_handle);
-	bool FullVertex(OpenMesh::VertexHandle v_handle);
+	bool FullVertex(TMesh::VertexHandle v_handle, const AList& AL, std::stack<AList*> stack);
 	AList *FindOnStack(std::stack<AList*> stack, int index);
 };
 
@@ -47,26 +49,10 @@ private:
 // Read mesh from file, build several
 // topological traits and store them in the mesh
 void TG::ReadMesh(std::string file_name) {
-	// Request vertex normals and read them from file
-	// If they're not provided, then calculate them
-	mesh.request_vertex_normals();
-
-	if (!mesh.has_vertex_normals()) {
-		std::cerr << "Error requiring vertex normals!" << std::endl;
+	if (!OpenMesh::IO::read_mesh(mesh, file_name)) {
+		std::cerr << "ERROR::ReadMesh : read error" << std::endl;
+		system("Pause");
 		exit(1);
-	}
-
-	OpenMesh::IO::Options opt;
-	if (!OpenMesh::IO::read_mesh(mesh, file_name, opt)) {
-		std::cerr << "read error" << std::endl;
-		exit(1);
-	}
-
-	if (!opt.check(OpenMesh::IO::Options::VertexNormal)) {
-		// Use face normals to update vertex normals
-		mesh.request_face_normals();
-		mesh.update_normals();
-		mesh.release_face_normals();
 	}
 
 	// ---------------------------------------
@@ -77,10 +63,8 @@ void TG::ReadMesh(std::string file_name) {
 	if (!mesh.is_triangles())
 		mesh.triangulate();
 
-	// Calculate and store vertices's valances,
-	// and store visited times
+	// Vertex property
 	mesh.add_property(valances);
-	mesh.add_property(vCounter);
 	mesh.add_property(vVisited);
 
 	for (TMesh::VertexIter v_it = mesh.vertices_begin(); v_it != mesh.vertices_end(); ++v_it) {
@@ -88,11 +72,17 @@ void TG::ReadMesh(std::string file_name) {
 		for (TMesh::VertexVertexIter vv_it = mesh.vv_iter(*v_it); vv_it.is_valid(); ++vv_it)
 			++valance;
 		mesh.property(valances, *v_it) = valance;
-		mesh.property(vCounter, *v_it) = valance;
 		mesh.property(vVisited, *v_it) = false;
 	}
 
-	// Store the status whether a triangle is visited
+	// Edge property
+	mesh.add_property(eVisited);
+
+	for (TMesh::EdgeIter e_it = mesh.edges_begin(); e_it != mesh.edges_end(); ++e_it) {
+		mesh.property(eVisited, *e_it) = false;
+	}
+
+	// Face property
 	mesh.add_property(fVisited);
 
 	for (TMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
@@ -102,6 +92,7 @@ void TG::ReadMesh(std::string file_name) {
 	// Print basic info
 	std::cout << file_name << ": " << std::endl
 		<< "#vertices:  " << mesh.n_vertices() << std::endl
+		<< "#edges:     " << mesh.n_edges() << std::endl
 		<< "#triangles: " << mesh.n_faces() << std::endl;
 }
 
@@ -117,83 +108,85 @@ void TG::EncodeConnectivity() {
 	while (!IsTraversed(f_handle)) {
 		// Iterate through the initial triangle and Add to AL
 		TMesh::ConstFaceVertexIter cfv_it = mesh.cfv_begin(f_handle);
-		TMesh::VertexHandle v0_handle = cfv_it++.handle();
-		TMesh::VertexHandle v1_handle = cfv_it++.handle();
-		TMesh::VertexHandle v2_handle = cfv_it.handle();
+		TMesh::VertexHandle v0_handle = *cfv_it++;
+		TMesh::VertexHandle v1_handle = *cfv_it++;
+		TMesh::VertexHandle v2_handle = *cfv_it;
 		
 		Add(&AL, v0_handle);
 		Add(&AL, v1_handle);
 		Add(&AL, v2_handle);
-		AL.focus = v0_handle.idx();
 		imcomplete_lists.push(&AL);
 
 		while (!imcomplete_lists.empty()) {
 			AL = *imcomplete_lists.top();
 			imcomplete_lists.pop();
 
-			// Given a focus vertex, iterate through
-			// all its neighbor vertices in ccw order
-			// Note that if the initial triangle is 
-			//                 v0
-			//                /  \
-			//               v1--v2
-			// and we set v0 as focus, then the iteration
-			// should start from v2 to v1
-			TMesh::VertexVertexCCWIter vv_ccwit = mesh.vv_ccwiter(v0_handle);
-			TMesh::VertexVertexCCWIter vv_end = vv_ccwit;
-
-			while (vv_end->idx() != v1_handle.idx() || vv_end->idx() != v2_handle.idx()) {
-				++vv_end;
-			}
-			vv_ccwit = vv_end; // v1
-			++vv_ccwit; // v2
-
-
 			while (!AL.Empty()) {
-				++vv_ccwit;
-				if (!vv_ccwit->is_valid())
-					vv_ccwit = mesh.vv_ccwiter(v0_handle);
-				if (vv_ccwit == vv_end) {
-					std::cout << "ERROR::VVIter: This is not supposed to happen!" << std::endl;
-					exit(1);
-				}
+				TMesh::VertexHandle focus_handle(AL.focus);
 
-				// If the neighboring vertex hasn't been visited,
-				// simply add it to the AL
-				int index_debug = vv_ccwit->idx();
-				if (FreeVertex(*vv_ccwit))
-					Add(&AL, *vv_ccwit);
-				// Else the neighboring vertex should either be in the
-				// current AL or in another AL on stack
-				else {
-					if (AL.Contains(vv_ccwit->idx()))
-						Split(&AL, &AL1, vv_ccwit->idx(), imcomplete_lists);
+				//debug
+				std::cout << "1 ring of " << AL.focus << ": ";
+				TMesh::VertexVertexCCWIter debug_it = mesh.vv_ccwiter(focus_handle);
+				TMesh::VertexVertexCCWIter debug_end = debug_it;
+				do {
+					std::cout << debug_it->idx() << " ";
+					++debug_it;
+				} while (debug_it->idx() != debug_end->idx());
+				std::cout << std::endl;
+
+				if (!FullVertex(focus_handle, AL, imcomplete_lists)) {
+					TMesh::HalfedgeHandle he_handle = FindFreeEdge(focus_handle, AL, imcomplete_lists);
+					TMesh::VertexHandle v_handle = mesh.from_vertex_handle(he_handle);
+
+					// If the neighboring vertex hasn't been visited,
+					// simply add it to the AL
+					if (FreeVertex(v_handle))
+						Add(&AL, v_handle);
+					// Else the neighboring vertex should either be in the
+					// current AL or in another AL on stack
 					else {
-						AList *al = FindOnStack(imcomplete_lists, vv_ccwit->idx());
-						Merge(&AL, al, vv_ccwit->idx());
+						if (AL.Contains(v_handle.idx())) {
+							Split(&AL, &AL1, v_handle.idx(), imcomplete_lists);
+							continue;
+						}
+						else {
+							AList *al = FindOnStack(imcomplete_lists, v_handle.idx());
+							Merge(&AL, al, v_handle.idx());
+						}
 					}
 				}
 
 				// Remove full vertices
+				std::deque<int> removes;
 	   		auto iter_AL = AL.iter();
 				for (iter_AL = AL.begin(); iter_AL != AL.end();) {
 					int index = *iter_AL;
 					TMesh::VertexHandle v_h(index);
-					if (mesh.property(vCounter, v_h) == 0) {
-						iter_AL = AL.Remove(iter_AL);
-					} else
-						++iter_AL;
+					if (FullVertex(v_h, AL, imcomplete_lists)) {
+						removes.push_back(*iter_AL); // Mark first
+					}
+					++iter_AL;
 				}
 
-				// If focus is removed, change the focus onto the next one,
-				// and deal with the neighbor vertices of the new focus
-				if (AL.FocusRemoved()) {
-					if (AL.Empty())
-						break;
-					AL.focus = *AL.begin();
-					v0_handle = mesh.vertex_handle(AL.focus);
-					vv_ccwit = mesh.vv_ccwiter(v0_handle);
-					continue;
+				// Do removing
+				while (!removes.empty()) {
+					int index = removes.front();
+					removes.pop_front();
+
+					// If focus is removed, change focus to the next neighbor
+					if (index == AL.focus) {
+						if (AL.Size() == 0)
+							break;
+
+						AL.focus = AL.NextNeighbor(AL.focus);
+
+						if (AL.Size() < 3) {
+							std::cout << "???" << std::endl;
+							system("pause");
+						}
+					}
+
+					AL.Remove(index);
 				}
 			}
 		}
@@ -251,6 +244,7 @@ ss >> index1 >> index2;
 void TG::Add(AList* AL, OpenMesh::VertexHandle v_handle) {
 	int index = v_handle.idx();
 	AL->Add(index);
+	indices.push_back(index);
 
 	int valance = mesh.property(valances, v_handle);
 	std::string str_valance = std::to_string(valance);
@@ -259,23 +253,69 @@ void TG::Add(AList* AL, OpenMesh::VertexHandle v_handle) {
 	// Mark this vertex as visited
 	mesh.property(vVisited, v_handle) = true;
 
-	// Mark this triangle as visited
-	TMesh::HalfedgeHandle he_handle = mesh.halfedge_handle(v_handle);
-	TMesh::HalfedgeHandle he_ccw_h = mesh.ccw_rotated_halfedge_handle(he_handle);
-	TMesh::FaceHandle f_handle = mesh.face_handle(he_ccw_h);
-	mesh.property(fVisited, f_handle) = true;
+	// Only one vertex in AL
+	if (AL->Size() == 1)
+		AL->focus = index;
 
-	// The vCounter of every neighbor of index should decrease by one
-	TMesh::ConstVertexVertexIter cvv_it = mesh.vv_iter(v_handle);
-	for (cvv_it; cvv_it.is_valid(); ++cvv_it) {
-		--mesh.property(vCounter, *cvv_it);
+	// Two vertices in AL, add one edge
+	else if (AL->Size() == 2) {
+		TMesh::VertexHandle focus_handle = mesh.vertex_handle(AL->focus);
+		TMesh::HalfedgeHandle he_handle = mesh.find_halfedge(focus_handle, v_handle);
+		TMesh::EdgeHandle e_handle = mesh.edge_handle(he_handle);
+		mesh.property(eVisited, e_handle) = true;
+	}
+
+	// Equal to or more than three vertices in AL,
+	// compute the one-ring vertices of index and 
+	// check whether two adjacent vertices have an edge and have both been visited,
+	// if so, add two edges and one triangle
+	else {
+		TMesh::VertexVertexCWIter vv_cwit = mesh.vv_cwiter(v_handle);
+		TMesh::VertexVertexCWIter vv_init = vv_cwit;
+		TMesh::VertexVertexCWIter vv_pre = vv_cwit++;
+		
+		do {
+			TMesh::VertexHandle v0 = *vv_pre;
+			TMesh::VertexHandle v1 = *vv_cwit;
+			TMesh::HalfedgeHandle edge = mesh.find_halfedge(v0, v1);
+
+			if (mesh.property(vVisited, v0) && mesh.property(vVisited, v1) && edge.idx() != -1) {
+				TMesh::HalfedgeHandle he0 = mesh.find_halfedge(v0, v_handle);
+				TMesh::HalfedgeHandle he1 = mesh.find_halfedge(v_handle, v1);
+				TMesh::EdgeHandle e0 = mesh.edge_handle(he0);
+				TMesh::EdgeHandle e1 = mesh.edge_handle(he1);
+				mesh.property(eVisited, e0) = true;
+				mesh.property(eVisited, e1) = true;
+				TMesh::FaceHandle tri = mesh.face_handle(he0);
+				mesh.property(fVisited, tri) = true;
+			}
+
+			++vv_cwit; ++vv_pre;
+		} while (vv_pre->idx() != vv_init->idx());
 	}
 }
 
-
+/**********************************
+*          TODO
+***********************************/
 // Split AL into two because it intersects itself,
 // generate code word, and push the smaller AL onto stack
 void TG::Split(AList* AL, AList* AL1, int index, std::stack<AList*> S) {
+	// Process the topological info
+	TMesh::VertexHandle focus_handle = mesh.vertex_handle(AL->focus);
+	TMesh::VertexHandle pre_handle = mesh.vertex_handle(AL->PreviousNeighbor(AL->focus));
+	TMesh::VertexHandle inter_handle = mesh.vertex_handle(index);
+	TMesh::HalfedgeHandle he0 = mesh.find_halfedge(focus_handle, inter_handle);
+	TMesh::HalfedgeHandle he1 = mesh.find_halfedge(inter_handle, pre_handle);
+	TMesh::EdgeHandle e0 = mesh.edge_handle(he0);
+	TMesh::EdgeHandle e1 = mesh.edge_handle(he1);
+	mesh.property(eVisited, e0) = true;
+	if (e1.idx() != -1) {
+		mesh.property(eVisited, e1) = true;
+		TMesh::FaceHandle tri = mesh.face_handle(he1);
+		mesh.property(fVisited, tri) = true;
+	}
+
 	int offset = AL->Split(AL1, index);
 
 	std::string str_offset = std::to_string(offset);
@@ -288,12 +328,10 @@ void TG::Split(AList* AL, AList* AL1, int index, std::stack<AList*> S) {
 		AL1 = temp;
 	}*/
 	S.push(AL1);
-
-	// The edge is processed
-	TMesh::VertexHandle v_handle(index);
-	--mesh.property(vCounter, v_handle);
-	v_handle = mesh.vertex_handle(AL->focus);
-	--mesh.property(vCounter, v_handle);
+	
+	// Move the focus of AL to intersection position
+	AL->Remove(AL->focus);
+	AL->focus = index;
 }
 
 
@@ -321,6 +359,49 @@ bool TG::IsTraversed(OpenMesh::FaceHandle& f_handle) {
 }
 
 
+// Return an unvisited HalfedgeHandle in ccw order
+OpenMesh::HalfedgeHandle TG::FindFreeEdge(OpenMesh::VertexHandle focus_handle, AList& AL, std::stack<AList*> stack) {
+	TMesh::VertexIHalfedgeCCWIter vih_ccwit = mesh.vih_ccwiter(focus_handle);
+	
+	// Given a focus vertex, iterate through its neighbor vertices in ccw order
+	// Note that the iteration should start from the 'previous' edge
+	// of focus and stop at the 'next' edge of focus
+	// For example, Suppose the initial AL is the following
+	//                 v1--v0
+	//                 /   |
+	//                v2   | 
+	//                |    |
+	//                v3---v4
+	// and we set v0 as focus, then the iteration should start 
+	// from v0-v4 to v0-v1 in ccw order
+	TMesh::VertexHandle pre_handle(AL.PreviousNeighbor(AL.focus));
+	TMesh::HalfedgeHandle he_handle = mesh.find_halfedge(pre_handle, focus_handle);
+
+	//debug
+	if (he_handle.idx() == -1) {
+		std::cout << "ERROR::FindHalfEdge" << std::endl;
+		system("pause");
+	}
+
+	while (vih_ccwit->idx() != he_handle.idx())
+		++vih_ccwit;
+	TMesh::VertexIHalfedgeCCWIter vih_init = ++vih_ccwit;
+
+	do {
+		TMesh::HalfedgeHandle he_handle(*vih_ccwit);
+		TMesh::EdgeHandle e_handle = mesh.edge_handle(he_handle);
+		TMesh::VertexHandle v_handle = mesh.from_vertex_handle(he_handle);
+		if (!mesh.property(eVisited, e_handle) && FindOnStack(stack, v_handle.idx()) == nullptr) {
+			return he_handle;
+		}
+		++vih_ccwit;
+	} while (vih_ccwit->idx() != vih_init->idx());
+
+	// This is not supposed to happen
+	return mesh.halfedge_handle(-1);
+}
+
+
 // Return true if the vertex if free,
 // which means the vertex is unvisited
 bool TG::FreeVertex(OpenMesh::VertexHandle v_handle) {
@@ -329,9 +410,24 @@ bool TG::FreeVertex(OpenMesh::VertexHandle v_handle) {
 
 
 // Return true if the vertex if full,
-// which means the vertex has been visited #valance times
-bool TG::FullVertex(OpenMesh::VertexHandle v_handle) {
-	return mesh.property(vCounter, v_handle) == 0;
+// which means every edge incident to vertex has been visited,
+// except for those in other AL on stack
+bool TG::FullVertex(TMesh::VertexHandle v_handle, const AList& AL, std::stack<AList*> stack) {
+	TMesh::VertexVertexCCWIter vv_ccwit = mesh.vv_ccwiter(v_handle);
+	TMesh::VertexVertexCCWIter vv_init = vv_ccwit;
+
+	do {
+		TMesh::VertexHandle vh = *vv_ccwit;
+		TMesh::HalfedgeHandle he = mesh.find_halfedge(vh, v_handle);
+		TMesh::EdgeHandle edge = mesh.edge_handle(he);
+		
+		// If the edge hasn't been visited and not on stack, then it's not full
+		if (!mesh.property(eVisited, edge) && FindOnStack(stack, v_handle.idx()) == nullptr)
+			return false;
+
+		++vv_ccwit;
+	} while (vv_ccwit->idx() != vv_init->idx());
+	return true;
 }
 
 
@@ -358,9 +454,10 @@ AList* TG::FindOnStack(std::stack<AList*> stack, int index) {
 		container.pop();
 	}
 
-	if (result == nullptr) {
-		std::cerr << "Error: bad algorithm" << std::endl;
+	/*if (result == nullptr) {
+		std::cerr << "Error::FindOnStack : bad algorithm" << std::endl;
+		system("Pause");
 		exit(1);
-	}
+	}*/
 	return result;
 }
