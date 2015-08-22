@@ -124,6 +124,18 @@ void TG::EncodeConnectivity() {
 			while (!AL.Empty()) {
 				TMesh::VertexHandle focus_handle(AL.focus);
 
+				/*if (AL.Size() >= 3) {
+					TMesh::VertexHandle pre_vh = mesh.vertex_handle(AL.PreviousNeighbor(AL.focus));
+					TMesh::VertexHandle focus_vh = mesh.vertex_handle(AL.focus);
+					TMesh::HalfedgeHandle free_heh = mesh.find_halfedge(pre_vh, focus_vh);
+					TMesh::EdgeHandle free_eh = mesh.edge_handle(free_heh);
+					if(!mesh.property(eVisited, free_eh))
+						mesh.property(eVisited, free_eh) = true;
+					TMesh::FaceHandle tri_fh = mesh.face_handle(free_heh);
+					if (!mesh.property(fVisited, tri_fh))
+					  mesh.property(fVisited, tri_fh) = true;
+				}*/
+
 				//debug
 				std::cout << "1 ring of " << AL.focus << ": ";
 				TMesh::VertexVertexCCWIter debug_it = mesh.vv_ccwiter(focus_handle);
@@ -134,29 +146,23 @@ void TG::EncodeConnectivity() {
 				} while (debug_it->idx() != debug_end->idx());
 				std::cout << std::endl;
 
-				if (!FullVertex(focus_handle, AL, imcomplete_lists)) {
-					TMesh::HalfedgeHandle he_handle = FindFreeEdge(focus_handle, AL, imcomplete_lists);
-					TMesh::VertexHandle v_handle = mesh.from_vertex_handle(he_handle);
+				TMesh::HalfedgeHandle he_handle = FindFreeEdge(focus_handle, AL, imcomplete_lists);
+				TMesh::VertexHandle v_handle = mesh.from_vertex_handle(he_handle);
 
-					// If the neighboring vertex hasn't been visited,
-					// simply add it to the AL
-
-					//debug
-					int debug_idx = v_handle.idx();
-
-					if (FreeVertex(v_handle))
-						Add(&AL, v_handle);
-					// Else the neighboring vertex should either be in the
-					// current AL or in another AL on stack
+				// If the neighboring vertex hasn't been visited,
+				// simply add it to the AL
+				if (FreeVertex(v_handle))
+					Add(&AL, v_handle);
+				// Else the neighboring vertex should either be in the
+				// current AL or in another AL on stack
+				else {
+					if (AL.Contains(v_handle.idx())) {
+						Split(&AL, &AL1, v_handle.idx(), imcomplete_lists);
+						continue;
+					}
 					else {
-						if (AL.Contains(v_handle.idx())) {
-							Split(&AL, &AL1, v_handle.idx(), imcomplete_lists);
-							continue;
-						}
-						else {
-							AList *al = FindOnStack(imcomplete_lists, v_handle.idx());
-							Merge(&AL, al, v_handle.idx());
-						}
+						AList *al = FindOnStack(imcomplete_lists, v_handle.idx());
+						Merge(&AL, al, v_handle.idx());
 					}
 				}
 
@@ -188,13 +194,7 @@ void TG::EncodeConnectivity() {
 					AL.Remove(index);
 				}
 
-				if (AL.Size() >= 3) {
-					TMesh::VertexHandle pre_vh = mesh.vertex_handle(AL.PreviousNeighbor(AL.focus));
-					TMesh::VertexHandle focus_vh = mesh.vertex_handle(AL.focus);
-					TMesh::HalfedgeHandle free_heh = mesh.find_halfedge(pre_vh, focus_vh);
-					TMesh::EdgeHandle free_eh = mesh.edge_handle(free_heh);
-					mesh.property(eVisited, free_eh) = true;
-				}
+				
 			}
 		}
 	}
@@ -257,6 +257,9 @@ void TG::Add(AList* AL, OpenMesh::VertexHandle v_handle) {
 	std::string str_valance = std::to_string(valance);
 	code += "add" + str_valance + " ";
 
+	//debug
+	std::cout << "Add " << index << std::endl;
+
 	// Mark this vertex as visited
 	mesh.property(vVisited, v_handle) = true;
 
@@ -289,10 +292,13 @@ void TG::Add(AList* AL, OpenMesh::VertexHandle v_handle) {
 			if (mesh.property(vVisited, v0) && mesh.property(vVisited, v1) && edge.idx() != -1) {
 				TMesh::HalfedgeHandle he0 = mesh.find_halfedge(v0, v_handle);
 				TMesh::HalfedgeHandle he1 = mesh.find_halfedge(v_handle, v1);
+				TMesh::HalfedgeHandle he2 = mesh.find_halfedge(v1, v0);
 				TMesh::EdgeHandle e0 = mesh.edge_handle(he0);
 				TMesh::EdgeHandle e1 = mesh.edge_handle(he1);
+				TMesh::EdgeHandle e2 = mesh.edge_handle(he2);
 				mesh.property(eVisited, e0) = true;
 				mesh.property(eVisited, e1) = true;
+				mesh.property(eVisited, e2) = true;
 				TMesh::FaceHandle tri = mesh.face_handle(he0);
 				mesh.property(fVisited, tri) = true;
 			}
@@ -366,6 +372,9 @@ bool TG::IsTraversed(OpenMesh::FaceHandle& f_handle) {
 }
 
 
+// =======================================
+// TODO: wrong way to find free when split
+// =======================================
 // Return an unvisited HalfedgeHandle in ccw order
 OpenMesh::HalfedgeHandle TG::FindFreeEdge(OpenMesh::VertexHandle focus_handle, AList& AL, std::stack<AList*> stack) {
 	TMesh::VertexIHalfedgeCCWIter vih_ccwit = mesh.vih_ccwiter(focus_handle);
@@ -386,6 +395,14 @@ OpenMesh::HalfedgeHandle TG::FindFreeEdge(OpenMesh::VertexHandle focus_handle, A
 
 	//debug
 	if (he_handle.idx() == -1) {
+		TMesh::VertexHandle vh = mesh.vertex_handle(19001);
+		std::cout << FullVertex(vh, AL, stack) << " ";
+		vh = mesh.vertex_handle(14341);
+		std::cout << FullVertex(vh, AL, stack) << " ";
+		vh = mesh.vertex_handle(18878);
+		std::cout << FullVertex(vh, AL, stack) << " ";
+		vh = mesh.vertex_handle(27765);
+		std::cout << FullVertex(vh, AL, stack) << " ";
 		std::cout << "ERROR::FindHalfEdge" << std::endl;
 		system("pause");
 	}
@@ -397,8 +414,7 @@ OpenMesh::HalfedgeHandle TG::FindFreeEdge(OpenMesh::VertexHandle focus_handle, A
 	do {
 		TMesh::HalfedgeHandle he_handle(*vih_ccwit);
 		TMesh::EdgeHandle e_handle = mesh.edge_handle(he_handle);
-		TMesh::VertexHandle v_handle = mesh.from_vertex_handle(he_handle);
-		if (!mesh.property(eVisited, e_handle) && FindOnStack(stack, v_handle.idx()) == nullptr) {
+		if (!mesh.property(eVisited, e_handle)) {
 			return he_handle;
 		}
 		++vih_ccwit;
@@ -416,6 +432,9 @@ bool TG::FreeVertex(OpenMesh::VertexHandle v_handle) {
 }
 
 
+// =======================================
+// TODO: wrong way to find free when split
+// =======================================
 // Return true if the vertex if full,
 // which means every edge incident to vertex has been visited,
 // except for those in other AL on stack
@@ -429,7 +448,7 @@ bool TG::FullVertex(TMesh::VertexHandle v_handle, const AList& AL, std::stack<AL
 		TMesh::EdgeHandle edge = mesh.edge_handle(he);
 		
 		// If the edge hasn't been visited and not on stack, then it's not full
-		if (!mesh.property(eVisited, edge) && FindOnStack(stack, v_handle.idx()) == nullptr)
+		if (!mesh.property(eVisited, edge) )
 			return false;
 
 		++vv_ccwit;

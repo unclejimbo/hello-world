@@ -2,7 +2,7 @@
 
 int main() {
 	TG tg;
-	tg.ReadMesh("../../models/sphere_geodesic.obj");
+	tg.ReadMesh("../../models/bunny.obj");
 	tg.EncodeConnectivity();
 	system("PAUSE");
 }
