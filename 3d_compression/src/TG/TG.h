@@ -140,6 +140,10 @@ void TG::EncodeConnectivity() {
 
 					// If the neighboring vertex hasn't been visited,
 					// simply add it to the AL
+
+					//debug
+					int debug_idx = v_handle.idx();
+
 					if (FreeVertex(v_handle))
 						Add(&AL, v_handle);
 					// Else the neighboring vertex should either be in the
@@ -179,14 +183,17 @@ void TG::EncodeConnectivity() {
 							break;
 
 						AL.focus = AL.NextNeighbor(AL.focus);
-
-						if (AL.Size() < 3) {
-							std::cout << "???" << std::endl;
-							system("pause");
-						}
 					}
 
 					AL.Remove(index);
+				}
+
+				if (AL.Size() >= 3) {
+					TMesh::VertexHandle pre_vh = mesh.vertex_handle(AL.PreviousNeighbor(AL.focus));
+					TMesh::VertexHandle focus_vh = mesh.vertex_handle(AL.focus);
+					TMesh::HalfedgeHandle free_heh = mesh.find_halfedge(pre_vh, focus_vh);
+					TMesh::EdgeHandle free_eh = mesh.edge_handle(free_heh);
+					mesh.property(eVisited, free_eh) = true;
 				}
 			}
 		}
@@ -248,7 +255,7 @@ void TG::Add(AList* AL, OpenMesh::VertexHandle v_handle) {
 
 	int valance = mesh.property(valances, v_handle);
 	std::string str_valance = std::to_string(valance);
-	code += "add" + str_valance;
+	code += "add" + str_valance + " ";
 
 	// Mark this vertex as visited
 	mesh.property(vVisited, v_handle) = true;
@@ -319,7 +326,7 @@ void TG::Split(AList* AL, AList* AL1, int index, std::stack<AList*> S) {
 	int offset = AL->Split(AL1, index);
 
 	std::string str_offset = std::to_string(offset);
-	code += "split" + str_offset;
+	code += "split" + str_offset + " ";
 
 	// Exchange AL with AL1 if AL is smaller
 	/*if (AL->Size() < AL1->Size()) {
