@@ -41,12 +41,12 @@ namespace gvis {
 		}
 
 		// Attach shaders to program and link
-		this->program = glCreateProgram();
-		glAttachShader(this->program, vertex_shader);
-		glAttachShader(this->program, fragment_shader);
+		this->Program = glCreateProgram();
+		glAttachShader(this->Program, vertex_shader);
+		glAttachShader(this->Program, fragment_shader);
 		if (gs_path != nullptr)
-			glAttachShader(this->program, geometry_shader);
-		glLinkProgram(this->program);
+			glAttachShader(this->Program, geometry_shader);
+		glLinkProgram(this->Program);
 
 		// Delete shaders
 		glDeleteShader(vertex_shader);
@@ -58,7 +58,7 @@ namespace gvis {
 
 	// Use this shader program
   void Shader::UseProgram() {
-		glUseProgram(this->program);
+		glUseProgram(this->Program);
 	}
 
 
@@ -71,8 +71,8 @@ namespace gvis {
 			shader = glCreateShader(GL_VERTEX_SHADER);
 			glShaderSource(shader, 1, &shader_source, NULL);
 			glCompileShader(shader);
-			checkError(program, "VERTEX");
-			glAttachShader(this->program, shader);
+			checkError(Program, "VERTEX");
+			glAttachShader(this->Program, shader);
 		} else if (type == "FRAGMENT") {
 			const GLchar* shader_source = readShaderSource(path);
 			shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -84,8 +84,8 @@ namespace gvis {
 		} else {
 			std::cerr << "ERROR::SHADER::UseShader: Please provide the right shader type." << std::endl;
 		}
-		glLinkProgram(this->program);
-		checkError(this->program, "PROGRAM");
+		glLinkProgram(this->Program);
+		checkError(this->Program, "PROGRAM");
 		glDeleteShader(shader);
 	}
 
