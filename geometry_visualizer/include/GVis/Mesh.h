@@ -22,6 +22,7 @@ namespace gvis {
 		GLuint VAO;
 
 		Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices);
+		Mesh() = default;
 		~Mesh() {}
 
 		void Draw();
