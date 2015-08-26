@@ -13,7 +13,7 @@
 namespace gvis {
 
 	// Constructor from shader files
-	Shader::Shader(const GLchar* vs_path, const GLchar* fs_path, const GLchar* gs_path  = nullptr ) {
+	Shader::Shader(const GLchar* vs_path, const GLchar* fs_path, const GLchar* gs_path /*= nullptr*/ ) {
 		// Shaders
 		GLuint vertex_shader, fragment_shader, geometry_shader;
 

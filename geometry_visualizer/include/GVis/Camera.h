@@ -5,7 +5,8 @@
 
 //======OpenGL Related==========
 #include <GL/glew.h>
-#include <glm/fwd.hpp>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace gvis {
 
@@ -38,22 +39,11 @@ namespace gvis {
 		GLfloat     MouseSensitivity;
 		GLfloat     Zoom;
 
-		// Constructor with glm vector
-		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH)
-			: Position(position), WorldUp(up), Yaw(yaw), Pitch(pitch), 
-			Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM) 
-		{
-			updateCameraVectors();
-		};
-		// Constructor with scalar
-		Camera(GLfloat pos_x = 0.0f, GLfloat pos_y= 0.0f, GLfloat pos_z = 0.0f, GLfloat up_x = 0.0f, GLfloat up_y = 1.0f, GLfloat up_z = 0.0f, GLfloat yaw = YAW, GLfloat pitch = PITCH)
-			: Position(glm::vec3(pos_x, pos_y, pos_z)), WorldUp(glm::vec3(up_x, up_y, up_z)), Yaw(yaw), Pitch(pitch), 
-			Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM) 
-		{
-			updateCameraVectors();
-		};
-		Camera() {};
-		~Camera() {};
+		
+		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH);
+		Camera(GLfloat pos_x = 0.0f, GLfloat pos_y = 0.0f, GLfloat pos_z = 0.0f, GLfloat up_x = 0.0f, GLfloat up_y = 1.0f, GLfloat up_z = 0.0f, GLfloat yaw = YAW, GLfloat pitch = PITCH);
+		Camera() {}
+		~Camera() {}
 
 		glm::mat4 GetViewMatrix();
 		void ProcessKeyboard(CameraMovement direction, GLfloat time_interval);

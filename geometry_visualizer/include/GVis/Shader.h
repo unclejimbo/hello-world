@@ -12,9 +12,9 @@ namespace gvis {
 	public:
 		GLuint Program;
 
-		Shader() {};
+		Shader() {}
 		Shader(const GLchar* vs_path, const GLchar* fs_path, const GLchar* gs_paht = nullptr);
-		~Shader() {};
+		~Shader() {}
 
 		void UseProgram();
 		void UseShader(const GLchar* path, std::string type);

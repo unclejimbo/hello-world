@@ -5,7 +5,7 @@
 
 //======OpenGL Related==========
 #include <GL/glew.h>
-#include <glm/fwd.hpp>
+#include <glm/vec3.hpp>
 
 namespace gvis {
 
@@ -21,8 +21,7 @@ namespace gvis {
 		std::vector<GLuint> Indices;
 		GLuint VAO;
 
-		Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices) :
-			Vertices(vertices), Indices(indices) {}
+		Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices);
 		~Mesh() {}
 
 		void Draw();
@@ -31,4 +30,4 @@ namespace gvis {
 		GLuint VBO, EBO;
 	};
 
-}
+} // namespace gvis
