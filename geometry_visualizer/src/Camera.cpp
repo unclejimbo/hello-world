@@ -13,8 +13,8 @@ namespace gvis {
 
 	// Constructor with glm vector
 	Camera::Camera(glm::vec3 position /* = glm::vec3(0.0f, 0.0f, 0.0f) */, glm::vec3 up /* = glm::vec3(0.0f, 1.0f, 0.0f) */, GLfloat yaw /* = YAW */, GLfloat pitch /* = PITCH */)
-		: Position(position), WorldUp(up), Yaw(yaw), Pitch(pitch),
-		Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
+		: Position_(position), WorldUp_(up), Yaw_(yaw), Pitch_(pitch),
+		Front_(glm::vec3(0.0f, 0.0f, -1.0f)), Speed_(SPEED), Sensitivity_(SENSITIVTY), Zoom_(ZOOM)
 	{
 		updateCameraVectors();
 	}
@@ -22,45 +22,45 @@ namespace gvis {
 
 	// Constructor with scalar
 	Camera::Camera(GLfloat pos_x /* = 0.0f */, GLfloat pos_y /* = 0.0f */, GLfloat pos_z /* = 0.0f */, GLfloat up_x /* = 0.0f */, GLfloat up_y /* = 1.0f */, GLfloat up_z /* = 0.0f */, GLfloat yaw /* = YAW */, GLfloat pitch /* = PITCH */)
-		: Position(glm::vec3(pos_x, pos_y, pos_z)), WorldUp(glm::vec3(up_x, up_y, up_z)), Yaw(yaw), Pitch(pitch),
-		Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
+		: Position_(glm::vec3(pos_x, pos_y, pos_z)), WorldUp_(glm::vec3(up_x, up_y, up_z)), Yaw_(yaw), Pitch_(pitch),
+		Front_(glm::vec3(0.0f, 0.0f, -1.0f)), Speed_(SPEED), Sensitivity_(SENSITIVTY), Zoom_(ZOOM)
 	{
 		updateCameraVectors();
 	}
 
 	// Return the lookat matrix
 	glm::mat4 Camera::GetViewMatrix() {
-		return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
+		return glm::lookAt(this->Position_, this->Position_ + this->Front_, this->Up_);
 	}
 
 
 	// Process keyboard
 	void Camera::ProcessKeyboard(CameraMovement direction, GLfloat time_interval) {
-		GLfloat speed = this->MovementSpeed * time_interval;
+		GLfloat speed = this->Speed_ * time_interval;
 
 		if (direction == FORWORD)
-			this->Position += this->Front * speed;
+			this->Position_ += this->Front_ * speed;
 		if (direction == BACKWARD)
-			this->Position -= this->Front * speed;
+			this->Position_ -= this->Front_ * speed;
 		if (direction == LEFT)
-			this->Position -= this->Right * speed;
+			this->Position_ -= this->Right_ * speed;
 	}
 
 
 	// Process mouse movement
 	void Camera::ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset, GLboolean ban_flip /* = true */) {
-		xoffset *= this->MouseSensitivity;
-		yoffset *= this->MouseSensitivity;
+		xoffset *= this->Sensitivity_;
+		yoffset *= this->Sensitivity_;
 
-		this->Yaw   += xoffset;
-		this->Pitch += yoffset;
+		this->Yaw_   += xoffset;
+		this->Pitch_ += yoffset;
 
 		// Prohibit pitch > 90 to prevent flip
 		if (ban_flip) {
-			if (this->Pitch > 89.0f)
-				this->Pitch = 89.0f;
-			if (this->Pitch < -89.0f)
-				this->Pitch = -89.0f;
+			if (this->Pitch_ > 89.0f)
+				this->Pitch_ = 89.0f;
+			if (this->Pitch_ < -89.0f)
+				this->Pitch_ = -89.0f;
 		}
 
 		updateCameraVectors();
@@ -69,25 +69,25 @@ namespace gvis {
 
 	// Take mouse wheel offset as input to zoom
 	void Camera::ProcessMouseScroll(GLfloat yoffset) {
-		if (this->Zoom > 1.0f && this->Zoom <= 45.0f)
-			this->Zoom -= yoffset;
-		if (this->Zoom <= 1.0f)
-			this->Zoom = 1.0f;
-		if (this->Zoom >= 45.0f)
-			this->Zoom = 45.0f;
+		if (this->Zoom_ > 1.0f && this->Zoom_ <= 45.0f)
+			this->Zoom_ -= yoffset;
+		if (this->Zoom_ <= 1.0f)
+			this->Zoom_ = 1.0f;
+		if (this->Zoom_ >= 45.0f)
+			this->Zoom_ = 45.0f;
 	}
 
 
 	// Update front, right and up vectors
 	void Camera::updateCameraVectors() {
 		glm::vec3 front;
-		front.x = cos(glm::radians(this->Yaw) * cos(glm::radians(this->Pitch)));
-		front.y = sin(glm::radians(this->Pitch));
-		front.z = sin(glm::radians(this->Yaw)) * cos(glm::radians(this->Pitch));
+		front.x = cos(glm::radians(this->Yaw_) * cos(glm::radians(this->Pitch_)));
+		front.y = sin(glm::radians(this->Pitch_));
+		front.z = sin(glm::radians(this->Yaw_)) * cos(glm::radians(this->Pitch_));
 
-		this->Front = glm::normalize(front);
-		this->Right = glm::normalize(glm::cross(this->Front, this->WorldUp));
-		this->Up    = glm::normalize(glm::cross(this->Right, this->Front));
+		this->Front_ = glm::normalize(front);
+		this->Right_ = glm::normalize(glm::cross(this->Front_, this->WorldUp_));
+		this->Up_    = glm::normalize(glm::cross(this->Right_, this->Front_));
 	}
 
 } // namespace gvis

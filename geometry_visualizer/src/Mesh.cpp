@@ -7,21 +7,21 @@
 namespace gvis {
 
 	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices) :
-		Vertices(vertices), Indices(indices) 
+		Vertices_(vertices), Indices_(indices) 
 	{
 		// Provide this VAO for OpenGL to render
-		glGenVertexArrays(1, &this->VAO);
-		glBindVertexArray(this->VAO);
+		glGenVertexArrays(1, &this->VAO_);
+		glBindVertexArray(this->VAO_);
 
 		// Setup vertex data
-		glGenBuffers(1, &this->VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-		glBufferData(GL_ARRAY_BUFFER, this->Vertices.size() * sizeof(Vertex), &this->Vertices[0], GL_STATIC_DRAW);
+		glGenBuffers(1, &this->vbo_);
+		glBindBuffer(GL_ARRAY_BUFFER, this->vbo_);
+		glBufferData(GL_ARRAY_BUFFER, this->Vertices_.size() * sizeof(Vertex), &this->Vertices_[0], GL_STATIC_DRAW);
 
 		// Setup indices
-		glGenBuffers(1, &this->EBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->Indices.size() * sizeof(GLuint), &this->Indices[0], GL_STATIC_DRAW);
+		glGenBuffers(1, &this->ebo_);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo_);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->Indices_.size() * sizeof(GLuint), &this->Indices_[0], GL_STATIC_DRAW);
 
 		// Setup vertex attributes
 		// 0 for Vertex Position
@@ -37,8 +37,8 @@ namespace gvis {
 
 
 	void Mesh::Draw() {
-		glBindVertexArray(this->VAO);
-		glDrawElements(GL_TRIANGLES, this->Indices.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(this->VAO_);
+		glDrawElements(GL_TRIANGLES, this->Indices_.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}
 

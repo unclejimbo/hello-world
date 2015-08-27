@@ -10,7 +10,7 @@ namespace gvis {
 
 	class Shader {
 	public:
-		GLuint Program;
+		GLuint Program_;
 
 		Shader() = default;
 		Shader(const GLchar* vs_path, const GLchar* fs_path, const GLchar* gs_paht = nullptr);

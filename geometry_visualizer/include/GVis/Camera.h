@@ -28,16 +28,16 @@ namespace gvis {
 	class Camera {
 	public:
 		// Camera attributes
-		glm::vec3   Position;
-		glm::vec3   Front;
-		glm::vec3   Up;
-		glm::vec3   Right;
-		glm::vec3   WorldUp;
-		GLfloat     Yaw;
-		GLfloat     Pitch;
-		GLfloat     MovementSpeed;
-		GLfloat     MouseSensitivity;
-		GLfloat     Zoom;
+		glm::vec3   Position_;
+		glm::vec3   Front_;
+		glm::vec3   Up_;
+		glm::vec3   Right_;
+		glm::vec3   WorldUp_;
+		GLfloat     Yaw_;
+		GLfloat     Pitch_;
+		GLfloat     Speed_;
+		GLfloat     Sensitivity_;
+		GLfloat     Zoom_;
 
 		
 		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH);

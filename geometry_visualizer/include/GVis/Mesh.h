@@ -17,9 +17,9 @@ namespace gvis {
 	class Mesh {
 	public:
 		// Mesh Data
-		std::vector<Vertex> Vertices;
-		std::vector<GLuint> Indices;
-		GLuint VAO;
+		std::vector<Vertex> Vertices_;
+		std::vector<GLuint> Indices_;
+		GLuint VAO_;
 
 		Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices);
 		Mesh() = default;
@@ -28,7 +28,7 @@ namespace gvis {
 		void Draw();
 
 	private:
-		GLuint VBO, EBO;
+		GLuint vbo_, ebo_;
 	};
 
 } // namespace gvis
