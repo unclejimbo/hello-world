@@ -56,12 +56,6 @@ namespace gvis {
 	}
 
 
-	// Use this shader program
-  void Shader::UseProgram() {
-		glUseProgram(this->Program_);
-	}
-
-
 	// Use shader provided by file,
 	// you should call UseProgram() after calling this one
 	void Shader::UseShader(const GLchar* path, std::string type) {

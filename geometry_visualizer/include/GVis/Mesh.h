@@ -25,6 +25,7 @@ namespace gvis {
 		Mesh() = default;
 		~Mesh() {}
 
+		void Setup(std::vector<Vertex> vertices, std::vector<GLuint> indices);
 		void Draw();
 
 	private:

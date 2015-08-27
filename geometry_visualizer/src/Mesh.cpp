@@ -9,6 +9,11 @@ namespace gvis {
 	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices) :
 		Vertices_(vertices), Indices_(indices) 
 	{
+		Setup(vertices, indices);
+	}
+
+
+	void Mesh::Setup(std::vector<Vertex> vertices, std::vector<GLuint> indices) {
 		// Provide this VAO for OpenGL to render
 		glGenVertexArrays(1, &this->VAO_);
 		glBindVertexArray(this->VAO_);
