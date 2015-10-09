@@ -1,0 +1,8 @@
+solution/
+build/
+bin/
+*.opensdf
+*.sdf
+*.sln
+*.suo
+*.pdf

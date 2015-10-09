@@ -1,7 +1,2 @@
 *~
 *.exe
-*.in
-\#*
-.*
-AOACP/source
-.ipynb_checkpoints/
