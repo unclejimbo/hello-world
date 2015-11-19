@@ -1,0 +1,7 @@
+resource/
+build/
+bin/
+*.opensdf
+*.sdf
+*.sln
+*.suo
