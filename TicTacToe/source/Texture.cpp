@@ -5,7 +5,7 @@
 #include <string>
 #include <iostream>
 
-void Texture::set_renderer(SDL_Renderer* renderer)
+void Texture::bind_renderer(SDL_Renderer* renderer)
 {
 	_renderer = renderer;
 }
