@@ -8,6 +8,7 @@ Button::Button()
 		_button_icons[i] = { 0, 0, 0, 0 };
 	}
 
+	_action = NO_ACTION;
 	_left_click = false;
 }
 
@@ -42,10 +43,8 @@ void Button::handle(SDL_Event* e)
 			if (active) {
 				if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT) {
 					_current_sprite = MOUSE_OVER;
-
-					// Add event for left click here
-
 					_left_click = false;
+					_action = LEFT_CLICK;
 				} else {
 					_current_sprite = MOUSE_DOWN;
 				}
