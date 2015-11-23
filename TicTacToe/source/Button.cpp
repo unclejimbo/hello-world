@@ -1,6 +1,4 @@
-#include "../include//Button.h"
-
-#include <iostream>
+#include "../include/Button.h"
 
 Button::Button()
 {
@@ -9,17 +7,10 @@ Button::Button()
 	for (int i = 0; i < MOUSE_SUM; ++i) {
 		_button_icons[i] = { 0, 0, 0, 0 };
 	}
+
+	_left_click = false;
 }
 
-void Button::set_icon(int x, int y, int width, int height, MouseStates s)
-{
-	_button_icons[s] = { x, y, width, height };
-}
-
-void Button::set_icon(SDL_Rect clip, MouseStates s)
-{
-	_button_icons[s] = clip;
-}
 
 void Button::handle(SDL_Event* e)
 {
@@ -32,24 +23,39 @@ void Button::handle(SDL_Event* e)
 
 		// Check if the cursor is inside the button area
 		bool active = true;
-		if (x < get_position().x || y < get_position().y ||
-			x > get_position().x + get_width() || y > get_position().y + get_height())
+		if (x < _position.x || y < _position.y ||
+			x > _position.x + _width || y > _position.y + _height)
 			active = false;
 
-		if (active) {
-			switch (e->type) {
-			case SDL_MOUSEMOTION:
-				_current_sprite = MOUSE_OVER;
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				_current_sprite = MOUSE_DOWN;
-				break;
-			case SDL_MOUSEBUTTONUP:
-				_current_sprite = MOUSE_UP;
-				break;
-			default:
+		if (!_left_click) {
+			if (active) {
+				if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
+					_current_sprite = MOUSE_DOWN;
+					_left_click = true;
+				} else {
+					_current_sprite = MOUSE_OVER;
+				}
+			} else {
 				_current_sprite = MOUSE_OUT;
-				break;
+			}
+		} else {
+			if (active) {
+				if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT) {
+					_current_sprite = MOUSE_OVER;
+
+					// Add event for left click here
+
+					_left_click = false;
+				} else {
+					_current_sprite = MOUSE_DOWN;
+				}
+			} else {
+				if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT) {
+					_current_sprite = MOUSE_OUT;
+					_left_click = false;
+				} else {
+					_current_sprite = MOUSE_DOWN;
+				}
 			}
 		}
 	}
@@ -57,5 +63,6 @@ void Button::handle(SDL_Event* e)
 
 void Button::render(int x, int y)
 {
-	get_texture()->render(x, y, &_button_icons[_current_sprite]);
+	_clip = _button_icons[_current_sprite];
+	Sprite::render(x, y);
 }

@@ -54,6 +54,8 @@ inline void Sprite::set_clip_rect(int x, int y, int width, int height)
 inline void Sprite::set_clip_rect(SDL_Rect source_rect)
 {
 	_clip = source_rect;
+	_width = source_rect.w;
+	_height = source_rect.h;
 }
 
 inline SDL_Rect Sprite::get_clip_rect()
