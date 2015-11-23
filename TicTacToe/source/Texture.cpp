@@ -5,9 +5,10 @@
 #include <string>
 #include <iostream>
 
-void Texture::bind_renderer(SDL_Renderer* renderer)
+Texture::~Texture()
 {
-	_renderer = renderer;
+	free();
+	_renderer = nullptr;
 }
 
 bool Texture::load_from_file(std::string path)
@@ -57,14 +58,4 @@ void Texture::render(int x, int y, SDL_Rect* clip /* = nullptr */)
 	}
 
 	SDL_RenderCopy(_renderer, _texture, clip, &render_rect);
-}
-
-int Texture::get_width()
-{
-	return _width;
-}
-
-int Texture::get_height()
-{
-	return _height;
 }
