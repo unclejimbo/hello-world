@@ -8,24 +8,70 @@ class Sprite
 {
 public:
 	Sprite();
-	~Sprite();
+	~Sprite()
+	{
+		_texture = nullptr;
+	}
 
-	inline void bind_texture(Texture* tex);
-	inline Texture* get_texture();
+	void bind_texture(Texture* tex);
+	Texture* get_texture();
 
-	inline void set_clip_rect(int x, int y, int width, int height);
-	inline void set_clip_rect(SDL_Rect source_rect);
-	inline SDL_Rect get_clip_rect();
+	void set_clip_rect(int x, int y, int width, int height);
+	void set_clip_rect(SDL_Rect source_rect);
+	SDL_Rect get_clip_rect();
 
-	inline SDL_Point get_position();
-	inline int get_width();
-	inline int get_height();
+	SDL_Point get_position();
+	int get_width();
+	int get_height();
 
-	inline void render(int x, int y);
+	virtual void render(int x, int y);
 
-private:
-	Texture* _texture;
+protected:
 	SDL_Point _position;
 	int _width, _height;
 	SDL_Rect _clip;
+	Texture* _texture;
 };
+
+
+inline void Sprite::bind_texture(Texture* tex)
+{
+	_texture = tex;
+}
+
+inline Texture* Sprite::get_texture()
+{
+	return _texture;
+}
+
+inline void Sprite::set_clip_rect(int x, int y, int width, int height)
+{
+	_clip = { x, y, width, height };
+	_width = width;
+	_height = height;
+}
+
+inline void Sprite::set_clip_rect(SDL_Rect source_rect)
+{
+	_clip = source_rect;
+}
+
+inline SDL_Rect Sprite::get_clip_rect()
+{
+	return _clip;
+}
+
+inline SDL_Point Sprite::get_position()
+{
+	return _position;
+}
+
+inline int Sprite::get_width()
+{
+	return _width;
+}
+
+inline int Sprite::get_height()
+{
+	return _height;
+}
