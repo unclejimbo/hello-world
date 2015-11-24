@@ -5,6 +5,17 @@
 #include <string>
 #include <iostream>
 
+Texture::Texture()
+{
+	_color_key.r = 0;
+	_color_key.g = 0;
+	_color_key.b = 0;
+	_texture = nullptr;
+	_renderer = nullptr;
+	_width = 0;
+	_height = 0;
+}
+
 Texture::~Texture()
 {
 	free();
@@ -22,6 +33,8 @@ bool Texture::load_from_file(std::string path)
 			<< " SDL_image Error: " << SDL_GetError() << std::endl;
 		return false;
 	}
+
+	SDL_SetColorKey(image, SDL_TRUE, SDL_MapRGB(image->format, _color_key.r, _color_key.g, _color_key.b));
 
 	_texture = SDL_CreateTextureFromSurface(_renderer, image);
 	if (_texture == nullptr) {
@@ -58,4 +71,11 @@ void Texture::render(int x, int y, SDL_Rect* clip /* = nullptr */)
 	}
 
 	SDL_RenderCopy(_renderer, _texture, clip, &render_rect);
+}
+
+void Texture::set_color_key(int r, int g, int b)
+{
+	_color_key.r = r;
+	_color_key.g = g;
+	_color_key.b = b;
 }

@@ -19,10 +19,13 @@ public:
 	int get_width();
 	int get_height();
 
+	void set_color_key(int r, int g, int b);
+
 protected:
-	SDL_Texture* _texture = nullptr;
-	SDL_Renderer* _renderer = nullptr;
+	SDL_Texture* _texture;
+	SDL_Renderer* _renderer;
 	int _width, _height;
+	SDL_Color _color_key;
 };
 
 inline void Texture::bind_renderer(SDL_Renderer* renderer)
