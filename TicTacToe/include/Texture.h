@@ -19,7 +19,7 @@ public:
 	int get_width();
 	int get_height();
 
-private:
+protected:
 	SDL_Texture* _texture = nullptr;
 	SDL_Renderer* _renderer = nullptr;
 	int _width, _height;
