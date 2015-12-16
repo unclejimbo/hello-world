@@ -32,16 +32,6 @@ Intro::~Intro()
 	_description = nullptr;
 }
 
-void Intro::handle(SDL_Event& e)
-{
-
-}
-
-void Intro::logic()
-{
-
-}
-
 void Intro::render()
 {
 	_title->render(300, 200);

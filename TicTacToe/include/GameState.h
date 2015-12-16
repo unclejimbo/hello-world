@@ -1,8 +1,9 @@
 #pragma once
 
 #include <SDL.h>
-#include "../include/Text.h"
-#include "../include/Sprite.h"
+#include "Text.h"
+#include "Sprite.h"
+#include "Event.h"
 
 static unsigned g_idx = 0;
 
@@ -14,7 +15,7 @@ public:
 
 	unsigned get_idx() { return _idx; }
 
-	virtual void handle(SDL_Event& e) = 0;
+	virtual Event handle(SDL_Event* e) = 0;
 	virtual void logic() = 0; 
 	virtual void render() = 0;
 

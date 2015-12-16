@@ -8,13 +8,14 @@ Button::Button()
 		_button_icons[i] = { 0, 0, 0, 0 };
 	}
 
-	_action = NO_ACTION;
 	_left_click = false;
 }
 
 
-void Button::handle(SDL_Event* e)
+Event Button::handle(SDL_Event* e)
 {
+	Event event = Event::NO_ACTION;
+
 	if (e->type == SDL_MOUSEMOTION || 
 		e->type == SDL_MOUSEBUTTONDOWN ||
 		e->type == SDL_MOUSEBUTTONUP) {
@@ -44,7 +45,7 @@ void Button::handle(SDL_Event* e)
 				if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT) {
 					_current_sprite = MOUSE_OVER;
 					_left_click = false;
-					_action = LEFT_CLICK;
+					event = Event::LEFT_CLICK;
 				} else {
 					_current_sprite = MOUSE_DOWN;
 				}
@@ -58,6 +59,8 @@ void Button::handle(SDL_Event* e)
 			}
 		}
 	}
+
+	return event;
 }
 
 void Button::render(int x, int y)

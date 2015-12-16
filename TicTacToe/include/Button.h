@@ -3,6 +3,7 @@
 #include <SDL.h>
 
 #include "Sprite.h"
+#include "Event.h"
 
 enum MouseStates
 {
@@ -13,12 +14,6 @@ enum MouseStates
 	MOUSE_SUM
 };
 
-enum MouseAction
-{
-	LEFT_CLICK,
-	RIGHT_CLICK,
-	NO_ACTION
-};
 
 class Button : public Sprite
 {
@@ -29,16 +24,13 @@ public:
 	void set_icon(int x, int y, int width, int height, MouseStates s);
 	void set_icon(SDL_Rect clip, MouseStates s);
 
-	void handle(SDL_Event* e);
-
-	MouseAction get_action();
+	Event handle(SDL_Event* e);
 
 	void render(int x, int y) override;
 
 private:
 	MouseStates _current_sprite;
 	SDL_Rect _button_icons[MOUSE_SUM];
-	MouseAction _action;
 	bool _left_click;
 };
 
@@ -54,9 +46,4 @@ inline void Button::set_icon(SDL_Rect clip, MouseStates s)
 	_button_icons[s] = clip;
 	_width = clip.w;
 	_height = clip.h;
-}
-
-inline MouseAction Button::get_action()
-{
-	return _action;
 }
