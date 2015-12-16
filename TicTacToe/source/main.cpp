@@ -10,6 +10,7 @@
 #include "../include/Text.h"
 #include "../include/Font.h"
 #include "../include/Intro.h"
+#include "../include/Menu.h"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ enum GameStates
 
 int main(int argc, char* argv[])
 {
-	// Engine Initializition
+	// Engine Initialization
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		cerr << "SDL couldn't initialize! SDL Error: " << SDL_GetError() << endl;
 		return -1;
@@ -63,24 +64,46 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	unsigned start_time = SDL_GetTicks();
+
 	// Creating resources	
 	Intro* intro = new Intro(renderer);
+	Menu* menu = new Menu(renderer);
 
 	// Game loop
 	bool quit = false;
 	SDL_Event event;
+	GameStates current_stage = STATE_INTRO;
 
 	while (!quit) {
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		
-		while (SDL_PollEvent(&event) != 0) {
-			if (event.type == SDL_QUIT)
-				quit = true;
+		if (current_stage == STATE_INTRO) {
+			while (SDL_PollEvent(&event) != 0) {
+				if (event.type == SDL_QUIT)
+					quit = true;
+			}
+			intro->render();
+			if (SDL_GetTicks() - start_time > 2000) {
+				current_stage = STATE_MENU;
+			}
 		}
 
-		intro->render();
+		if (current_stage == STATE_MENU) {
+			while (SDL_PollEvent(&event) != 0) {
+				if (event.type == SDL_QUIT)
+					quit = true;
+				Event e = menu->handle(&event);
+				if (e == Event::PVC) {
+
+				}
+				if (e == Event::PVP) {
+
+				}
+			}
+			menu->render();
+		}
 
 		SDL_RenderPresent(renderer);
 	}

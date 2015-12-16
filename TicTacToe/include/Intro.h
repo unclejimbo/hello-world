@@ -8,7 +8,7 @@ public:
 	Intro(SDL_Renderer* renderer);
 	~Intro();
 
-	Event handle(SDL_Event* e) override {}
+	Event handle(SDL_Event* e) override { return Event::NO_ACTION; }
 	void logic() override {}
 	void render() override;
 
