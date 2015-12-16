@@ -6,7 +6,7 @@
 class Texture
 {
 public:
-	Texture() = default;
+	Texture();
 	~Texture();
 
 	bool load_from_file(std::string path);
