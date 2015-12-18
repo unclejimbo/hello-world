@@ -3,10 +3,10 @@
 Intro::Intro(SDL_Renderer* renderer)
 {
 	_font_title = new Font();
-	_font_title->open("../../resource/fonts/AD.ttf", 36);
+	_font_title->open("../resource/fonts/AD.ttf", 36);
 
 	_font_decription = new Font();
-	_font_decription->open("../../resource/fonts/AD.ttf", 24);
+	_font_decription->open("../resource/fonts/AD.ttf", 24);
 
 	_title = new Text("TicTacToe");
 	_title->bind_font(_font_title);

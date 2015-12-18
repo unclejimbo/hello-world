@@ -3,7 +3,7 @@
 Menu::Menu(SDL_Renderer* renderer)
 {
 	_font_title = new Font();
-	_font_title->open("../../resource/fonts/AD.ttf", 36);
+	_font_title->open("../resource/fonts/AD.ttf", 36);
 
 	_title = new Text("TicTacToe");
 	_title->bind_font(_font_title);
@@ -12,7 +12,7 @@ Menu::Menu(SDL_Renderer* renderer)
 
 	_tex_btns = new Texture();
 	_tex_btns->bind_renderer(renderer);
-	_tex_btns->load_from_file("../../resource/images/menu_buttons.jpg");
+	_tex_btns->load_from_file("../resource/images/menu_buttons.jpg");
 
 	_pvc = new Button(); 
 	_pvc->bind_texture(_tex_btns);
