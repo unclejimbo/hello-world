@@ -4,13 +4,13 @@
 
 #include <iostream>
 
-#include "../include/Texture.h"
-#include "../include/Sprite.h"
-#include "../include/Button.h"
-#include "../include/Text.h"
-#include "../include/Font.h"
-#include "../include/Intro.h"
-#include "../include/Menu.h"
+#include "Texture.h"
+#include "Sprite.h"
+#include "Button.h"
+#include "Text.h"
+#include "Font.h"
+#include "Intro.h"
+#include "Menu.h"
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-#include "../include/Intro.h"
+#include "Intro.h"
 
 Intro::Intro(SDL_Renderer* renderer)
 {

@@ -1,4 +1,4 @@
-#include "../include/Menu.h"
+#include "Menu.h"
 
 Menu::Menu(SDL_Renderer* renderer)
 {

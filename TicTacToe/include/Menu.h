@@ -2,7 +2,7 @@
 
 #include "GameState.h"
 
-#include "../include/Button.h"
+#include "Button.h"
 
 class Menu : public GameState
 {

@@ -1,5 +1,5 @@
-#include "../include/Sprite.h"
-#include "../include/Texture.h"
+#include "Sprite.h"
+#include "Texture.h"
 
 Sprite::Sprite()
 {
