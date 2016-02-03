@@ -1,0 +1,8 @@
+build/
+bin/
+*.opensdf
+*.sdf
+*.sln
+*.suo
+*.vcxproj
+*.filters
